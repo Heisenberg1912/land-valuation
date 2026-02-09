@@ -68,7 +68,7 @@ const UserSchema = new Schema(
     toJSON: {
       transform(_doc, ret) {
         delete ret.password;
-        delete ret.__v;
+        if (ret.__v !== undefined) delete ret.__v;
         return ret;
       },
     },
