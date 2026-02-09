@@ -7,6 +7,26 @@ import { isValidAccessCode } from "./access-codes";
 
 const COOKIE = "va_session";
 
+// TypeScript interfaces for User document
+export interface UserDocument {
+  _id: string;
+  email: string;
+  password?: string;
+  name: string;
+  role: "user" | "associate" | "vendor" | "buyer" | "admin" | "superadmin";
+  isVerified: boolean;
+  isActive: boolean;
+  subscription: {
+    plan: "free" | "pro" | "enterprise";
+    status: "active" | "canceled" | "expired";
+    startDate: Date;
+    endDate?: Date;
+  };
+  lastLogin?: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export async function getAuthEmail(): Promise<string | null> {
   const token = cookies().get(COOKIE)?.value;
   if (!token) return null;
@@ -15,17 +35,17 @@ export async function getAuthEmail(): Promise<string | null> {
   return sess?.email ?? null;
 }
 
-export async function getAuthUser() {
+export async function getAuthUser(): Promise<UserDocument | null> {
   const email = await getAuthEmail();
   if (!email) return null;
   await dbConnect();
-  const user = await User.findOne({ email: email.toLowerCase(), isActive: true }).lean();
+  const user = await User.findOne({ email: email.toLowerCase(), isActive: true }).lean<UserDocument>();
   return user;
 }
 
-export async function getUserByEmail(email: string) {
+export async function getUserByEmail(email: string): Promise<UserDocument | null> {
   await dbConnect();
-  const user = await User.findOne({ email: email.toLowerCase() }).select("+password").lean();
+  const user = await User.findOne({ email: email.toLowerCase() }).select("+password").lean<UserDocument>();
   return user;
 }
 
