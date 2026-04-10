@@ -1,9 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { z } from "zod";
-import { dbConnect } from "@/lib/mongo";
-import { Session, User } from "@/lib/models";
-import { newToken, getUserByEmail, verifyPassword } from "@/lib/auth";
+import { createSession, getUserByEmail, sanitizeUser, touchLastLogin, verifyPassword } from "@/lib/auth";
 
 const Body = z.object({
   email: z.string().email(),
@@ -13,8 +11,6 @@ const Body = z.object({
 export async function POST(req: Request) {
   try {
     const body = Body.parse(await req.json());
-
-    await dbConnect();
 
     // Find user with password field
     const user = await getUserByEmail(body.email);
@@ -50,12 +46,9 @@ export async function POST(req: Request) {
       );
     }
 
-    // Update last login
-    await User.findByIdAndUpdate(user._id, { lastLogin: new Date() });
-
     // Create session
-    const token = newToken();
-    await Session.create({ token, email: body.email.toLowerCase() });
+    await touchLastLogin(body.email);
+    const token = await createSession(body.email);
 
     cookies().set("va_session", token, {
       httpOnly: true,
@@ -64,12 +57,9 @@ export async function POST(req: Request) {
       maxAge: 60 * 60 * 24 * 30
     });
 
-    // Return user info without password
-    const { password: _, ...userWithoutPassword } = user;
-
     return NextResponse.json({
       ok: true,
-      user: userWithoutPassword
+      user: sanitizeUser(user)
     });
   } catch (error: any) {
     if (error.name === "ZodError") {

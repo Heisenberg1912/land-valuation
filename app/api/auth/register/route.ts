@@ -1,9 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { z } from "zod";
-import { dbConnect } from "@/lib/mongo";
-import { Session, User } from "@/lib/models";
-import { newToken, createUser } from "@/lib/auth";
+import { createSession, createUser, getUserByEmail } from "@/lib/auth";
 
 const Body = z.object({
   email: z.string().email(),
@@ -15,10 +13,8 @@ export async function POST(req: Request) {
   try {
     const body = Body.parse(await req.json());
 
-    await dbConnect();
-
     // Check if user already exists
-    const existingUser = await User.findOne({ email: body.email.toLowerCase() });
+    const existingUser = await getUserByEmail(body.email);
 
     if (existingUser) {
       return NextResponse.json(
@@ -31,8 +27,7 @@ export async function POST(req: Request) {
     const user = await createUser(body.email, body.password, body.name);
 
     // Create session
-    const token = newToken();
-    await Session.create({ token, email: body.email.toLowerCase() });
+    const token = await createSession(body.email);
 
     cookies().set("va_session", token, {
       httpOnly: true,

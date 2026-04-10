@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
-import { mustGetEnv } from "./env";
+import { isLocalDevBypass } from "./dev";
 
-const MONGODB_URI = mustGetEnv("MONGODB_URI");
+const MONGODB_URI = process.env.MONGODB_URI;
 
 declare global {
   // eslint-disable-next-line no-var
@@ -12,7 +12,9 @@ const cached = global.__mongooseConn ?? { conn: null, promise: null };
 global.__mongooseConn = cached;
 
 export async function dbConnect() {
+  if (isLocalDevBypass()) return mongoose;
   if (cached.conn) return cached.conn;
+  if (!MONGODB_URI) throw new Error("Missing env var: MONGODB_URI");
   if (!cached.promise) {
     cached.promise = mongoose.connect(MONGODB_URI, {
       bufferCommands: false

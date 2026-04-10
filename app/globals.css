@@ -63,3 +63,11 @@ body{
   border-radius: 18px;
   box-shadow: var(--shadow);
 }
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}

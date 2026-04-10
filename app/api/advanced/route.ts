@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { ensureUsageKey, getUsageState, checkHasPro } from "@/lib/auth";
-import { generateVisionContent, toInlineData } from "@/lib/gemini";
 import { buildAdvancedPrompt } from "@/lib/gemini-tuning";
 import { AdvancedResultSchema, BaseResultSchema } from "@/lib/schema";
+import { isLocalDevBypass } from "@/lib/dev";
+import { createMockAdvancedResult } from "@/lib/mock-analysis";
 
 const Body = z.object({
   imageDataUrl: z.string().min(20),
@@ -91,6 +92,12 @@ export async function POST(req: Request) {
   if (!baseIsValid(body.base)) {
     return NextResponse.json({ error: "BASE_INVALID", message: "Base analysis incomplete or out of range." }, { status: 400 });
   }
+
+  if (isLocalDevBypass()) {
+    return NextResponse.json({ advanced: createMockAdvancedResult(body.base) });
+  }
+
+  const [{ generateVisionContent, toInlineData }] = await Promise.all([import("@/lib/gemini")]);
   const inline = toInlineData(body.imageDataUrl);
 
   let result;

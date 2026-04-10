@@ -2,7 +2,9 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
-import { Button, Card, Pill } from "@/components/ui";
+import { motion, AnimatePresence } from "framer-motion";
+import { CheckCircle2, AlertTriangle, Clock, DollarSign, Activity, Settings2, BarChart, Hammer, Layers, LayoutList, UploadCloud, X, Mail, Lock, User, Hash } from "lucide-react";
+import { Button, Card, Pill, Accordion, Spinner } from "@/components/ui";
 import { CITY_SUGGESTIONS } from "@/lib/cities";
 
 type StageLabel = "Planning" | "Foundation" | "Structure" | "Services" | "Finishing" | "Completed";
@@ -1268,7 +1270,7 @@ export default function Page() {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [accessCode, setAccessCode] = useState("");
-  const [authMode, setAuthMode] = useState<"signin" | "register" | "accesscode">("signin");
+  const [authMode, setAuthMode] = useState<"signin" | "register" | "accesscode" | null>(null);
   const [authEmail, setAuthEmail] = useState<string | null>(null);
   const [authUser, setAuthUser] = useState<any | null>(null);
 
@@ -1590,6 +1592,7 @@ export default function Page() {
     setAuthUser(j?.user || null);
     setEmail("");
     setPassword("");
+    setAuthMode(null);
     await refreshUsage();
   }
 
@@ -1611,6 +1614,7 @@ export default function Page() {
     setEmail("");
     setPassword("");
     setName("");
+    setAuthMode(null);
     await refreshUsage();
   }
 
@@ -1630,6 +1634,7 @@ export default function Page() {
     if (typeof window !== "undefined") {
       localStorage.setItem("va_access_code", accessCode);
     }
+    setAuthMode(null);
     await refreshUsage();
   }
 
@@ -1923,610 +1928,560 @@ export default function Page() {
     color: baseValid ? item.color : greyColor
   }));
 
+
+
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen flex flex-col overflow-hidden bg-[color:var(--bg)] text-[color:var(--text)] font-sans">
       <div className="pointer-events-none fixed inset-0 -z-10">
-        <div className="absolute -top-24 right-10 h-72 w-72 rounded-full bg-[radial-gradient(circle_at_center,var(--glow-1),transparent_70%)]" />
-        <div className="absolute bottom-[-120px] left-[-80px] h-[420px] w-[420px] rounded-full bg-[radial-gradient(circle_at_center,var(--glow-2),transparent_70%)]" />
+        <div className="absolute inset-0 opacity-[0.03] [background-image:radial-gradient(var(--text)_1px,transparent_1px)] [background-size:32px_32px]" />
+        <div className="absolute -top-24 right-10 h-96 w-96 rounded-full bg-[radial-gradient(circle_at_center,var(--glow-1),transparent_70%)]" />
+        <div className="absolute bottom-[-120px] left-[-80px] h-[500px] w-[500px] rounded-full bg-[radial-gradient(circle_at_center,var(--glow-2),transparent_70%)]" />
       </div>
 
-      <header className="mx-auto grid max-w-[1400px] grid-cols-1 items-center gap-4 px-4 pt-8 lg:grid-cols-[1fr_auto_1fr]">
-        <div className="flex flex-wrap items-center justify-center gap-2 lg:justify-start">
-          {errorShort ? <Pill>{errorShort}</Pill> : null}
-          {usage ? <Pill>{usage.paid ? "Pro" : `${Math.max(0, 3 - usage.freeUsed)}/3`}</Pill> : null}
+      <header className="relative z-10 flex flex-wrap items-center justify-between gap-4 border-b border-[color:var(--line)] bg-[color:var(--card)]/60 px-6 py-3 backdrop-blur-xl">
+        <div className="flex flex-wrap items-center justify-center gap-4">
+          <div className="text-center sm:text-left">
+            <div className="text-xl font-black tracking-tight text-[color:var(--text)]">{t("title")}</div>
+            <div className="flex items-center gap-2">
+              <span className="text-[9px] font-bold uppercase tracking-[0.28em] text-[color:var(--muted)]">{t("subtitle")}</span>
+              <Pill className="text-[8px] px-1.5 py-0 border-none bg-[color:var(--accent)] text-[color:var(--accent-contrast)]">{t("engine")}</Pill>
+            </div>
+          </div>
+          {errorShort ? <Pill className="border-red-500/20 bg-red-500/10 text-red-500 font-bold">{errorShort}</Pill> : null}
+          {usage ? <Pill className="bg-[color:var(--card-weak)] border-none font-bold text-[color:var(--text)]">{usage.paid ? "PRO" : `${Math.max(0, 3 - usage.freeUsed)}/3 FREE`}</Pill> : null}
         </div>
-        <div className="text-center">
-          <div className="text-2xl font-black tracking-tight text-[color:var(--text)]">{t("title")}</div>
-          <div className="text-xs font-semibold uppercase tracking-[0.28em] text-[color:var(--muted)]">{t("subtitle")}</div>
-          <div className="mt-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-[color:var(--muted)]">{t("engine")}</div>
-        </div>
-        <div className="flex flex-wrap items-center justify-center gap-2 lg:justify-end">
-          <div className="flex items-center gap-2 rounded-xl border border-[color:var(--line)] bg-[color:var(--card)] px-2 py-1">
-            <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[color:var(--muted)]">{t("language")}</span>
+
+        <div className="flex flex-wrap items-center justify-center gap-3">
+          <div className="flex items-center gap-2 rounded-xl border border-[color:var(--line)] bg-[color:var(--card)]/50 px-2 py-1 shadow-sm transition-all hover:bg-[color:var(--card)]">
+            <Settings2 size={14} className="text-[color:var(--muted)]" />
             <select
               value={lang}
               onChange={(e) => setLang(e.target.value as Lang)}
-              className="bg-transparent text-xs font-semibold text-[color:var(--text)] outline-none"
+              className="bg-transparent text-xs font-bold text-[color:var(--text)] outline-none cursor-pointer"
             >
               {LANGUAGE_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
+                <option key={option.value} value={option.value} className="bg-[color:var(--card)]">
                   {option.label}
                 </option>
               ))}
             </select>
           </div>
-          <div className="flex items-center gap-2 rounded-xl border border-[color:var(--line)] bg-[color:var(--card)] px-2 py-1">
-            <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[color:var(--muted)]">{t("currency")}</span>
-            <Info text={fxInfo} />
+          <div className="flex items-center gap-2 rounded-xl border border-[color:var(--line)] bg-[color:var(--card)]/50 px-2 py-1 shadow-sm transition-all hover:bg-[color:var(--card)]" title={fxInfo}>
+            <DollarSign size={14} className="text-[color:var(--muted)]" />
             <select
               value={currency}
               onChange={(e) => setCurrency(e.target.value as Currency)}
-              className="bg-transparent text-xs font-semibold text-[color:var(--text)] outline-none"
+              className="bg-transparent text-xs font-bold text-[color:var(--text)] outline-none cursor-pointer"
             >
               {Object.values(CURRENCY_LABELS).map((item) => (
-                <option key={item.code} value={item.code}>
-                  {item.name} ({item.code})
+                <option key={item.code} value={item.code} className="bg-[color:var(--card)]">
+                  {item.code}
                 </option>
               ))}
             </select>
           </div>
-          <div className="flex items-center gap-1">
-            <Button variant={theme === "light" ? "primary" : "outline"} onClick={() => setTheme("light")} className="h-9 px-2 text-xs">
-              {t("light")}
-            </Button>
-            <Button variant={theme === "dark" ? "primary" : "outline"} onClick={() => setTheme("dark")} className="h-9 px-2 text-xs">
-              {t("dark")}
-            </Button>
-            <Button variant={theme === "hc" ? "primary" : "outline"} onClick={() => setTheme("hc")} className="h-9 px-2 text-xs">
-              {t("highContrast")}
-            </Button>
+          <div className="flex items-center gap-1 rounded-xl border border-[color:var(--line)] bg-[color:var(--card)]/50 p-1 shadow-sm">
+            <button onClick={() => setTheme("light")} className={`px-2 py-1 text-[10px] font-black rounded-lg transition-all ${theme === 'light' ? 'bg-[color:var(--accent)] text-[color:var(--accent-contrast)] shadow-sm' : 'text-[color:var(--muted)] hover:text-[color:var(--text)]'}`}>LT</button>
+            <button onClick={() => setTheme("dark")} className={`px-2 py-1 text-[10px] font-black rounded-lg transition-all ${theme === 'dark' ? 'bg-[color:var(--accent)] text-[color:var(--accent-contrast)] shadow-sm' : 'text-[color:var(--muted)] hover:text-[color:var(--text)]'}`}>DK</button>
+            <button onClick={() => setTheme("hc")} className={`px-2 py-1 text-[10px] font-black rounded-lg transition-all ${theme === 'hc' ? 'bg-[color:var(--accent)] text-[color:var(--accent-contrast)] shadow-sm' : 'text-[color:var(--muted)] hover:text-[color:var(--text)]'}`}>HC</button>
           </div>
+          
           {authEmail ? (
-            <>
-              {usage?.hasPro ? (
-                <Pill className="bg-green-500/10 text-green-500 border-green-500/20">Pro</Pill>
-              ) : (
-                <Pill className="bg-amber-500/10 text-amber-500 border-amber-500/20">Free</Pill>
-              )}
-              <Pill>{authUser?.name || authEmail.split("@")[0]}</Pill>
-              <Button variant="outline" onClick={signOut} className="h-9 px-3 text-xs">
+            <div className="flex items-center gap-2">
+              <Pill className="font-bold border-[color:var(--accent)]/10">{authUser?.name || authEmail.split("@")[0]}</Pill>
+              <Button variant="outline" onClick={signOut} className="h-8 px-3 text-xs border-none hover:bg-red-500/10 hover:text-red-500">
                 Sign Out
               </Button>
-            </>
+            </div>
           ) : (
-            <>
-              {authMode === "signin" && (
-                <>
-                  <input
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Email"
-                    className="h-9 w-[140px] rounded-xl border border-[color:var(--line)] bg-[color:var(--card)] px-3 text-xs font-semibold text-[color:var(--text)] outline-none focus:border-[color:var(--text)]"
-                  />
-                  <input
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Password"
-                    className="h-9 w-[120px] rounded-xl border border-[color:var(--line)] bg-[color:var(--card)] px-3 text-xs font-semibold text-[color:var(--text)] outline-none focus:border-[color:var(--text)]"
-                  />
-                  <Button onClick={signIn} disabled={!email.includes("@") || !password} className="h-9 px-3 text-xs">
-                    Sign In
-                  </Button>
-                  <Button variant="outline" onClick={() => setAuthMode("register")} className="h-9 px-2 text-xs">
-                    Register
-                  </Button>
-                  <Button variant="outline" onClick={() => setAuthMode("accesscode")} className="h-9 px-2 text-xs">
-                    Access Code
-                  </Button>
-                </>
-              )}
-              {authMode === "register" && (
-                <>
-                  <input
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="Name"
-                    className="h-9 w-[120px] rounded-xl border border-[color:var(--line)] bg-[color:var(--card)] px-3 text-xs font-semibold text-[color:var(--text)] outline-none focus:border-[color:var(--text)]"
-                  />
-                  <input
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Email"
-                    className="h-9 w-[140px] rounded-xl border border-[color:var(--line)] bg-[color:var(--card)] px-3 text-xs font-semibold text-[color:var(--text)] outline-none focus:border-[color:var(--text)]"
-                  />
-                  <input
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Password"
-                    className="h-9 w-[120px] rounded-xl border border-[color:var(--line)] bg-[color:var(--card)] px-3 text-xs font-semibold text-[color:var(--text)] outline-none focus:border-[color:var(--text)]"
-                  />
-                  <Button onClick={register} disabled={!name || !email.includes("@") || password.length < 6} className="h-9 px-3 text-xs">
-                    Register
-                  </Button>
-                  <Button variant="outline" onClick={() => setAuthMode("signin")} className="h-9 px-2 text-xs">
-                    Back
-                  </Button>
-                </>
-              )}
-              {authMode === "accesscode" && (
-                <>
-                  <input
-                    value={accessCode}
-                    onChange={(e) => setAccessCode(e.target.value)}
-                    placeholder="Access Code"
-                    className="h-9 w-[180px] rounded-xl border border-[color:var(--line)] bg-[color:var(--card)] px-3 text-xs font-semibold text-[color:var(--text)] outline-none focus:border-[color:var(--text)]"
-                  />
-                  <Button onClick={validateAccessCode} disabled={!accessCode} className="h-9 px-3 text-xs">
-                    Activate
-                  </Button>
-                  <Button variant="outline" onClick={() => setAuthMode("signin")} className="h-9 px-2 text-xs">
-                    Back
-                  </Button>
-                </>
-              )}
-            </>
-          )}
-          {!usage?.hasPro && (
-            <Button variant="primary" onClick={() => {
-              const marketplaceUrl = process.env.NEXT_PUBLIC_MARKETPLACE_URL || "https://marketplace-xi-sage.vercel.app";
-              window.open(`${marketplaceUrl}/subscription-request`, "_blank");
-            }} className="h-9 px-3 text-xs">
-              Upgrade
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" onClick={() => setAuthMode("signin")} className="h-8 px-3 text-xs border-none">Log In</Button>
+              <Button variant="primary" onClick={() => setAuthMode("register")} className="h-8 px-4 text-xs shadow-sm">Join</Button>
+            </div>
           )}
         </div>
       </header>
 
-      <main className="mx-auto mt-6 max-w-[1400px] px-4 pb-12">
+      <main className="relative z-10 flex flex-1 flex-col overflow-hidden lg:flex-row">
         {error ? (
-          <div className="mb-4 rounded-2xl border border-[color:var(--line)] bg-[color:var(--card)] px-4 py-3">
-            <div className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[color:var(--muted)]">Error</div>
-            <div className="mt-2 break-words text-xs font-semibold text-[color:var(--text)]">{error}</div>
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-md px-4">
+            <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 backdrop-blur-md shadow-xl flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <AlertTriangle size={18} className="text-red-500" />
+                <div>
+                  <div className="text-[10px] font-bold uppercase tracking-widest text-red-500">System Error</div>
+                  <div className="text-xs font-bold text-red-500">{error}</div>
+                </div>
+              </div>
+              <button onClick={() => setError(null)} className="text-red-500 hover:bg-red-500/20 p-1.5 rounded-lg transition-colors"><CheckCircle2 size={16} /></button>
+            </motion.div>
           </div>
         ) : null}
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_400px_1fr]">
-          <Card className="order-2 lg:order-none">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Label>{t("constructionProgress")}</Label>
-                <Info text="Progress and stage are derived from visual cues in the image." />
-              </div>
-              <Pill>{status}</Pill>
-            </div>
 
-            <div className="mt-4">
-              <div className="flex items-end justify-between">
-                <div className="text-5xl font-black text-[color:var(--text)]">{baseValid ? `${Math.round(progressDisplay)}%` : "—"}</div>
-                <div className="flex items-center gap-1 text-xs font-semibold uppercase tracking-[0.2em] text-[color:var(--muted)]">
-                  {t("progress")}
-                  <Info text="Progress is derived from the image stage classification and mapped to the stage range." />
+        {/* Left Side: Capture & Input */}
+        <motion.div
+          layout
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ 
+            layout: { type: "spring", damping: 35, stiffness: 100 },
+            opacity: { duration: 0.6 } 
+          }}
+          style={baseValid ? {
+            paddingTop: '51px',
+            paddingLeft: '107px',
+            width: '483px'
+          } : {}}
+          className={`flex flex-col p-6 sm:p-8 ${baseValid ? "justify-start w-full border-b border-[color:var(--line)] lg:h-full lg:border-b-0 lg:border-r bg-[color:var(--card)]/20 pb-12" : "justify-center mx-auto w-full h-full max-w-xl"}`}
+        >
+          <div className={`flex flex-col ${baseValid ? "items-start" : "items-center"}`}>
+            <Card className={`w-full transition-all duration-500 ${baseValid ? "shadow-none border-none p-0 bg-transparent" : "p-8 shadow-2xl bg-[color:var(--card)]/80 backdrop-blur-sm"}`}>
+              <div className="mb-10">
+                <div className="flex items-center gap-2 mb-1">
+                  <Activity size={16} className="text-[color:var(--accent)]" />
+                  <Label>{t("capture")}</Label>
                 </div>
+                <div className="text-2xl font-black text-[color:var(--text)]">{t("inputWindow")}</div>
               </div>
 
-              <div className="mt-3">
-                <div className="relative h-2 overflow-hidden rounded-full bg-[color:var(--card-weak)]">
-                  <div className="h-full rounded-full bg-[color:var(--accent)]" style={{ width: `${progressDisplay}%` }} />
-                  {STAGE_RANGES.slice(0, 5).map((stage) => (
-                    <span
-                      key={stage.label}
-                      className="absolute top-0 h-2 w-[2px] bg-[color:var(--line)]"
-                      style={{ left: `${stage.max}%` }}
+              <div className={`relative mx-auto mb-10 flex aspect-square w-full max-w-[280px] items-center justify-center overflow-hidden rounded-[2rem] border-2 border-dashed border-[color:var(--line)] bg-[color:var(--card)] shadow-lg transition-all duration-300 hover:border-[color:var(--accent)]/40 hover:shadow-xl ${imageDataUrl ? "border-solid border-[color:var(--accent)]/10" : ""}`}>
+                {imageDataUrl ? (
+                  <Image src={imageDataUrl} alt="Preview" fill className="object-cover transition-transform duration-1000 hover:scale-[1.03]" />
+                ) : (
+                  <div className="flex flex-col items-center gap-4 text-[color:var(--muted)]">
+                    <div className="p-5 rounded-full bg-[color:var(--card-weak)]">
+                      <UploadCloud size={40} strokeWidth={1.5} className="text-[color:var(--accent)]" />
+                    </div>
+                    <div className="text-center">
+                      <span className="text-sm font-black text-[color:var(--text)] block mb-1">Upload Photo</span>
+                      <span className="text-[10px] font-bold uppercase tracking-widest">{t("browse")} or Drop</span>
+                    </div>
+                  </div>
+                )}
+                <div className="pointer-events-none absolute inset-0 opacity-10 [background-image:linear-gradient(to_right,rgba(0,0,0,0.5)_1px,transparent_1px),linear-gradient(to_bottom,rgba(0,0,0,0.5)_1px,transparent_1px)] [background-size:12.5%_100%,100%_12.5%]" />
+              </div>
+
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-3">
+                  <Button variant="outline" className="h-11 rounded-2xl bg-[color:var(--card)] shadow-sm hover:shadow-md transition-all" onClick={() => {
+                    if (browseInputRef.current) { browseInputRef.current.value = ""; browseInputRef.current.click(); }
+                  }}>
+                    {t("browse")}
+                  </Button>
+                  <Button variant="outline" className="h-11 rounded-2xl bg-[color:var(--card)] shadow-sm hover:shadow-md transition-all" onClick={() => {
+                    if (liveInputRef.current) { liveInputRef.current.value = ""; liveInputRef.current.click(); }
+                  }}>
+                    {t("live")}
+                  </Button>
+                </div>
+
+                <div className="grid grid-cols-1 items-center gap-3 sm:grid-cols-[1fr_auto]">
+                  <div className="relative">
+                    <input
+                      value={meta.location}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        setMeta((s) => ({ ...s, location: value }));
+                        setGeoStatus(value ? "manual" : "none");
+                      }}
+                      placeholder={t("location")}
+                      list="city-list"
+                      className="h-12 w-full rounded-2xl border border-[color:var(--line)] bg-[color:var(--card)] px-4 text-xs font-bold text-[color:var(--text)] outline-none focus:border-[color:var(--accent)] transition-all shadow-sm focus:shadow-md"
                     />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button variant="outline" onClick={requestGps} className="h-12 w-12 p-0 rounded-2xl shadow-sm">
+                      <Activity size={18} />
+                    </Button>
+                    <Pill className="h-12 px-4 rounded-2xl font-black bg-[color:var(--card-weak)] border-none">
+                      {geoStatus === "exif" ? "EXIF" : geoStatus === "gps" ? "GPS" : geoStatus === "manual" ? "MAN" : "OFF"}
+                    </Pill>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { val: meta.projectType, key: 'projectType', opts: ['Residential', 'Commercial', 'Industrial', 'Mixed-use', 'Infrastructure'] },
+                    { val: meta.scale, key: 'scale', opts: ['Low-rise', 'Mid-rise', 'High-rise', 'Large-site'] },
+                    { val: meta.constructionType, key: 'constructionType', opts: ['RCC', 'Steel', 'Hybrid'] }
+                  ].map(sel => (
+                    <select 
+                      key={sel.key}
+                      value={sel.val} 
+                      onChange={(e) => setMeta((s) => ({ ...s, [sel.key]: e.target.value }))} 
+                      className="h-11 rounded-2xl border border-[color:var(--line)] bg-[color:var(--card)] px-3 text-[10px] font-black text-[color:var(--text)] outline-none cursor-pointer hover:bg-[color:var(--card-weak)] transition-colors"
+                    >
+                      {sel.opts.map(o => <option key={o}>{o}</option>)}
+                    </select>
                   ))}
                 </div>
-                <div className="mt-2 grid grid-cols-5 text-[8px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)] sm:text-[9px]">
-                  <span>Planning</span>
-                  <span>Foundation</span>
-                  <span>Structure</span>
-                  <span>Services</span>
-                  <span>Finishing</span>
-                </div>
-              </div>
 
-              <div className="mt-4 flex items-center justify-between">
-                <div className="flex items-center gap-1 text-xs font-semibold uppercase tracking-[0.2em] text-[color:var(--muted)]">
-                  {t("stage")}
-                  <Info text="Stage is chosen from the allowed construction phases based on image cues." />
-                </div>
-                <div className="text-3xl font-black text-[color:var(--text)]">{baseValid ? stageLabel : "—"}</div>
-              </div>
-            </div>
-
-            <div className="mt-5">
-              <div className="flex items-center gap-2">
-                <Label>{t("executionEstimation")}</Label>
-                <Info text="Time and effort are estimated from detected stage, progress, and typical productivity ranges." />
-              </div>
-              <div className="mt-3 grid grid-cols-3 gap-2">
-                <StatCard
-                  label={status === "Completed" ? t("timeTaken") : t("timeLeft")}
-                  value={timelineValue}
-                  tooltip="Estimated from visual progress density and phase benchmarks."
-                />
-                <StatCard
-                  label={manpowerLabel}
-                  value={manpowerValue}
-                  tooltip={
-                    status === "Completed"
-                      ? "Man-hours used are scaled to the total effort for the completed project."
-                      : "Remaining man-hours are split by stage ratio and aligned to time left."
-                  }
-                />
-                <StatCard
-                  label={machineryLabel}
-                  value={machineryValue}
-                  tooltip={
-                    status === "Completed"
-                      ? "Machine-hours used are scaled to the total effort for the completed project."
-                      : "Remaining machine-hours are split by stage ratio and aligned to time left."
-                  }
-                />
-              </div>
-            </div>
-
-            <div className="mt-4">
-              <div className="flex items-center gap-2">
-                <Label>{t("resources")}</Label>
-                <Info text="Resource tags reflect typical trades, equipment, and materials for the detected stage." />
-              </div>
-              <div className="mt-2 flex flex-wrap gap-2">
-                <Pill className="text-[color:var(--text)]">{manpowerTag(stageLabel)}</Pill>
-                <Pill className="text-[color:var(--text)]">{skillsTag(stageLabel)}</Pill>
-                <Pill className="text-[color:var(--text)]">{machineryTag(stageLabel)}</Pill>
-                <Pill className="text-[color:var(--text)]">{hardwareTag(stageLabel)}</Pill>
-              </div>
-            </div>
-
-            <div className="mt-4">
-              <div className="flex items-center gap-2">
-                <Label>{t("stagesLeft")}</Label>
-                <Info text="Stages left are deduced from the detected phase and typical construction sequence." />
-              </div>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {stagesLeft.length ? (
-                  stagesLeft.map((item) => (
-                    <span key={item} className="max-w-[140px] truncate rounded-full border border-[color:var(--line)] bg-[color:var(--card-weak)] px-3 py-1 text-xs font-semibold text-[color:var(--text)]">
-                      {item}
-                    </span>
-                  ))
-                ) : (
-                  <span className="text-xs font-semibold text-[color:var(--muted)]">{baseValid ? "-" : t("pending")}</span>
-                )}
-              </div>
-            </div>
-
-            <div className="mt-4 grid grid-cols-1 gap-2 lg:grid-cols-2">
-              <PieCard
-                title="Stage Time Split (Est.)"
-                segments={timeSplitSegments}
-                valueFormatter={(value) => (baseValid ? `${value}h` : "-")}
-                infoText="Split is estimated from total effort and standard stage weightings."
-              />
-              <PieCard
-                title="Budget Split (Est.)"
-                segments={budgetSplitSegments}
-                valueFormatter={(value) => (baseValid ? formatCurrencyValue(currency, value, rates) : "-")}
-                infoText="Budget shares are estimated from stage norms and project scale."
-              />
-            </div>
-
-            <div className="mt-4 flex items-center justify-between">
-              <Label>{t("singleUse")}</Label>
-              <div className="text-sm font-semibold text-[color:var(--text)]">{t("stored")}</div>
-            </div>
-          </Card>
-
-          <div className="order-1 mx-auto flex w-full max-w-[400px] flex-col gap-4 lg:order-none lg:w-[400px] lg:max-w-none">
-            <Card className="flex flex-col items-center gap-2 lg:h-[400px]">
-              <div className="text-center">
-                <Label>{t("capture")}</Label>
-                <div className="text-xs font-semibold uppercase tracking-[0.2em] text-[color:var(--muted)]">{t("inputWindow")}</div>
-              </div>
-
-              <div className="relative h-[190px] w-[190px] overflow-hidden rounded-2xl border border-[color:var(--line)] bg-[color:var(--card)] sm:h-[210px] sm:w-[210px] lg:h-[210px] lg:w-[210px]">
-                {imageDataUrl ? (
-                  <Image src={imageDataUrl} alt="Preview" fill className="object-cover" />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center text-xs font-semibold text-[color:var(--muted)]">Empty</div>
-                )}
-                <div className="pointer-events-none absolute inset-0 opacity-35 [background-image:linear-gradient(to_right,rgba(0,0,0,0.25)_1px,transparent_1px),linear-gradient(to_bottom,rgba(0,0,0,0.25)_1px,transparent_1px)] [background-size:33%_100%,100%_33%]" />
-                <div className="pointer-events-none absolute inset-2 rounded-xl border border-[color:var(--line)]" />
-              </div>
-
-              <div className="w-full max-w-[300px] space-y-1.5">
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (browseInputRef.current) {
-                        browseInputRef.current.value = "";
-                        browseInputRef.current.click();
-                      }
-                    }}
-                    className="rounded-lg border border-[color:var(--line)] bg-[color:var(--card)] px-2 py-1.5 text-center text-[11px] font-semibold text-[color:var(--text)] hover:bg-[color:var(--pill)]"
-                  >
-                    {t("browse")}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (liveInputRef.current) {
-                        liveInputRef.current.value = "";
-                        liveInputRef.current.click();
-                      }
-                    }}
-                    className="rounded-lg border border-[color:var(--line)] bg-[color:var(--card)] px-2 py-1.5 text-center text-[11px] font-semibold text-[color:var(--text)] hover:bg-[color:var(--pill)]"
-                  >
-                    {t("live")}
-                  </button>
-                </div>
-                <div className="grid grid-cols-1 items-center gap-2 sm:grid-cols-[1fr_auto_auto]">
-                  <input
-                    value={meta.location}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      setMeta((s) => ({ ...s, location: value }));
-                      setGeoStatus(value ? "manual" : "none");
-                    }}
-                    placeholder={t("location")}
-                    list="city-list"
-                    autoComplete="address-level2"
-                    className="h-7 rounded-lg border border-[color:var(--line)] bg-[color:var(--card)] px-2 text-[10px] font-semibold text-[color:var(--text)] outline-none"
-                  />
-                  <button
-                    type="button"
-                    onClick={requestGps}
-                    className="rounded-lg border border-[color:var(--line)] bg-[color:var(--card)] px-2 py-1 text-[10px] font-semibold text-[color:var(--text)]"
-                  >
-                    {t("useGps")}
-                  </button>
-                  <Pill>
-                    {geoStatus === "exif"
-                      ? t("exif")
-                      : geoStatus === "gps"
-                        ? t("gps")
-                        : geoStatus === "manual"
-                          ? t("manual")
-                          : geoStatus === "denied"
-                            ? t("gpsOff")
-                            : t("noGps")}
-                  </Pill>
-                </div>
-                <div className="grid grid-cols-3 gap-2">
-                  <select
-                    value={meta.projectType}
-                    onChange={(e) => setMeta((s) => ({ ...s, projectType: e.target.value }))}
-                    className="h-7 rounded-lg border border-[color:var(--line)] bg-[color:var(--card)] px-2 text-[9px] font-semibold text-[color:var(--text)] outline-none"
-                  >
-                    <option>Residential</option>
-                    <option>Commercial</option>
-                    <option>Industrial</option>
-                    <option>Mixed-use</option>
-                    <option>Infrastructure</option>
-                  </select>
-                  <select
-                    value={meta.scale}
-                    onChange={(e) => setMeta((s) => ({ ...s, scale: e.target.value }))}
-                    className="h-7 rounded-lg border border-[color:var(--line)] bg-[color:var(--card)] px-2 text-[9px] font-semibold text-[color:var(--text)] outline-none"
-                  >
-                    <option>Low-rise</option>
-                    <option>Mid-rise</option>
-                    <option>High-rise</option>
-                    <option>Large-site</option>
-                  </select>
-                  <select
-                    value={meta.constructionType}
-                    onChange={(e) => setMeta((s) => ({ ...s, constructionType: e.target.value }))}
-                    className="h-7 rounded-lg border border-[color:var(--line)] bg-[color:var(--card)] px-2 text-[9px] font-semibold text-[color:var(--text)] outline-none"
-                  >
-                    <option>RCC</option>
-                    <option>Steel</option>
-                    <option>Hybrid</option>
-                  </select>
-                </div>
                 <input
                   value={meta.note}
                   onChange={(e) => setMeta((s) => ({ ...s, note: e.target.value }))}
                   placeholder={t("notes")}
-                  className="h-7 rounded-lg border border-[color:var(--line)] bg-[color:var(--card)] px-2 text-[10px] font-semibold text-[color:var(--text)] outline-none"
+                  className="h-12 w-full rounded-2xl border border-[color:var(--line)] bg-[color:var(--card)] px-4 text-xs font-bold text-[color:var(--text)] outline-none focus:border-[color:var(--accent)] shadow-sm"
                 />
-                <button
-                  type="button"
+
+                <Button
+                  variant="primary"
                   onClick={runBase}
                   disabled={!imageDataUrl || loading || !canRun}
-                  className="w-full rounded-lg bg-[color:var(--accent)] px-2 py-2 text-center text-[11px] font-semibold text-[color:var(--accent-contrast)] disabled:opacity-40"
+                  className="h-14 w-full rounded-[1.5rem] text-lg font-black shadow-xl shadow-black/10 transition-all hover:scale-[1.02] active:scale-[0.98]"
                 >
-                  {loading ? "..." : t("analyze")}
-                </button>
-                <datalist id="city-list">
-                  {CITY_SUGGESTIONS.map((city) => (
-                    <option key={city} value={city} />
-                  ))}
-                </datalist>
-                <input
-                  ref={browseInputRef}
-                  type="file"
-                  accept="image/*"
-                  multiple={false}
-                  className="hidden"
-                  onChange={(e) => e.target.files?.[0] && onPickFile(e.target.files[0])}
-                />
-                <input
-                  ref={liveInputRef}
-                  type="file"
-                  accept="image/*"
-                  multiple={false}
-                  capture="environment"
-                  className="hidden"
-                  onChange={(e) => e.target.files?.[0] && onPickFile(e.target.files[0])}
-                />
-              </div>
-            </Card>
+                  {loading ? <Spinner /> : t("analyze").toUpperCase()}
+                </Button>
 
-            <Card>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Label>Category Matrix</Label>
-                  <Info text="AI selects the closest row from the reference dataset based on the image context." />
-                </div>
-                <Pill>AI</Pill>
-              </div>
-              <div className="mt-3">
-                {baseValid && selectedCategoryRow ? (
-                  <table className="w-full border-collapse text-[10px] text-[color:var(--text)]">
-                    <tbody>
-                      {categoryEntries.map((entry) => (
-                        <tr key={entry.label} className="border-t border-[color:var(--line)]">
-                          <td className="w-[40%] px-2 py-2 text-[9px] font-semibold uppercase tracking-[0.16em] text-[color:var(--muted)]">
-                            {entry.label}
-                          </td>
-                          <td className="px-2 py-2 break-words text-[10px] font-semibold text-[color:var(--text)]">{entry.value}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                ) : (
-                  <div className="px-2 py-2 text-[color:var(--muted)]">{baseValid ? "No category matrix returned" : t("pending")}</div>
-                )}
+                <datalist id="city-list">
+                  {CITY_SUGGESTIONS.map((city) => <option key={city} value={city} />)}
+                </datalist>
+                <input ref={browseInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && onPickFile(e.target.files[0])} />
+                <input ref={liveInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => e.target.files?.[0] && onPickFile(e.target.files[0])} />
               </div>
             </Card>
           </div>
+        </motion.div>
 
-          <Card className="order-3 lg:order-none">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Label>{t("valuationInsights")}</Label>
-                <Info text="Values are indicative ranges based on stage, scale, and comparable benchmarks." />
-              </div>
-              {paywalled ? <Pill>Locked</Pill> : <Pill>Active</Pill>}
-            </div>
-
-            <div className="mt-4 grid grid-cols-2 gap-2">
-              {status === "Completed" ? (
-                <>
-                  <div className="col-span-2">
-                    <StatCard
-                      label={t("propertyVal")}
-                      value={baseValid ? premium(formatCurrencyRange(currency, minVal, maxVal, rates)) : pendingValue}
-                      tooltip="Estimated using visual construction density and comparable benchmarks."
-                      tag={<Pill>{CURRENCY_LABELS[currency].name}</Pill>}
-                    />
+        {/* Right Side: Results (Scrollable Fit-to-Screen) */}
+        <AnimatePresence>
+          {baseValid && (
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+              transition={{ duration: 0.6, type: "spring", bounce: 0 }}
+              className="flex-1 overflow-y-auto p-6 sm:p-10 h-full scrollbar-hide"
+            >
+              <div className="mx-auto w-full max-w-6xl space-y-8 pb-24">
+                <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6">
+                  <div>
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className={`h-3 w-3 rounded-full animate-pulse ${status === 'Completed' ? 'bg-green-500' : 'bg-orange-500'}`} />
+                      <span className="text-xs font-black uppercase tracking-[0.3em] text-[color:var(--muted)]">Current Phase</span>
+                    </div>
+                    <h2 className="text-6xl font-black text-[color:var(--text)] tracking-tighter leading-none">{status}</h2>
                   </div>
-                  <StatCard
-                    label={t("budgetUsed")}
-                    value={baseValid ? premium(formatCurrencyRange(currency, minBudgetUsed, maxBudgetUsed, rates)) : pendingValue}
-                    tooltip="Estimated from total project value multiplied by progress."
-                    tag={<Pill>{CURRENCY_LABELS[currency].name}</Pill>}
-                  />
-                  <StatCard
-                    label={t("confidence")}
-                    value={baseValid ? premium(stageMeta.confidence) : pendingValue}
-                    tooltip="Confidence tightens as construction advances."
-                    tag={<Pill>Indicative</Pill>}
-                  />
-                </>
-              ) : (
-                <>
-                  <StatCard
-                    label={t("budgetLeft")}
-                    value={baseValid ? premium(formatCurrencyRange(currency, minBudget, maxBudget, rates)) : pendingValue}
-                    tooltip="Indicative range based on stage and confidence." 
-                    tag={<Pill>{CURRENCY_LABELS[currency].name}</Pill>}
-                  />
-                  <StatCard
-                    label={t("budgetUsed")}
-                    value={baseValid ? premium(formatCurrencyRange(currency, minBudgetUsed, maxBudgetUsed, rates)) : pendingValue}
-                    tooltip="Estimated from total project value multiplied by progress."
-                    tag={<Pill>{CURRENCY_LABELS[currency].name}</Pill>}
-                  />
-                  <StatCard
-                    label={t("landVal")}
-                    value={baseValid ? premium(formatCurrencyRange(currency, minLand, maxLand, rates)) : pendingValue}
-                    tooltip="Land value is scaled by project size and stage confidence."
-                    tag={<Pill>{CURRENCY_LABELS[currency].name}</Pill>}
-                  />
-                  <StatCard
-                    label={t("projectVal")}
-                    value={baseValid ? premium(formatCurrencyRange(currency, minVal, maxVal, rates)) : pendingValue}
-                    tooltip="Total project value based on scale, type, and progress."
-                    tag={<Pill>{CURRENCY_LABELS[currency].name}</Pill>}
-                  />
-                  <StatCard
-                    label={t("confidence")}
-                    value={baseValid ? premium(stageMeta.confidence) : pendingValue}
-                    tooltip="Confidence tightens as construction advances."
-                    tag={<Pill>Indicative</Pill>}
-                  />
-                </>
-              )}
-            </div>
+                  <div className="flex items-end gap-6 bg-[color:var(--card)] p-6 rounded-[2.5rem] shadow-sm border border-[color:var(--line)]">
+                    <div className="text-right">
+                      <div className="text-6xl font-black text-[color:var(--accent)] tracking-tighter leading-none">{Math.round(progressDisplay)}%</div>
+                      <p className="mt-1 text-[10px] font-black uppercase tracking-widest text-[color:var(--muted)]">{t("progress")}</p>
+                    </div>
+                    <div className="h-12 w-[1px] bg-[color:var(--line)]" />
+                    <div className="text-right">
+                      <div className="text-2xl font-black text-[color:var(--text)]">{stageLabel}</div>
+                      <p className="mt-1 text-[10px] font-black uppercase tracking-widest text-[color:var(--muted)]">{t("stage")}</p>
+                    </div>
+                  </div>
+                </div>
 
-            <div className="mt-4">
-              <div className="flex items-center gap-2">
-                <Label>{t("signals")}</Label>
-                <Info text="Signals are short cues derived from stage, scale, location, and risk analysis." />
-              </div>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {signals.length ? (
-                  signals.map((item) => (
-                    <span key={item} className="max-w-[160px] truncate rounded-full border border-[color:var(--line)] bg-[color:var(--card-weak)] px-3 py-1 text-xs font-semibold text-[color:var(--text)]">
-                      {item}
-                    </span>
-                  ))
-                ) : (
-                  <span className="text-xs font-semibold text-[color:var(--muted)]">{baseValid ? t("pending") : t("awaitingBase")}</span>
-                )}
-              </div>
-            </div>
+                <div className="relative px-2">
+                  <div className="relative h-4 overflow-hidden rounded-full bg-[color:var(--card)] border border-[color:var(--line)] shadow-inner p-1">
+                    <motion.div 
+                      className="absolute inset-y-1 left-1 rounded-full bg-[color:var(--accent)] shadow-lg" 
+                      initial={{ width: 0 }}
+                      animate={{ width: `calc(${progressDisplay}% - 8px)` }}
+                      transition={{ duration: 2, ease: [0.16, 1, 0.3, 1] }}
+                    />
+                    {STAGE_RANGES.slice(1, 5).map((stage) => (
+                      <span key={stage.label} className="absolute top-0 h-full w-[2px] bg-[color:var(--bg)]/50 z-10" style={{ left: `${stage.min}%` }} />
+                    ))}
+                  </div>
+                  <div className="mt-4 grid grid-cols-5 text-[10px] font-black uppercase tracking-widest text-[color:var(--muted)]">
+                    <span className="text-left">Planning</span>
+                    <span className="text-center">Foundation</span>
+                    <span className="text-center">Structure</span>
+                    <span className="text-center">Services</span>
+                    <span className="text-right">Finishing</span>
+                  </div>
+                </div>
 
-            <div className="mt-4 grid grid-cols-2 gap-2">
-              <StatCard
-                label={t("progressVsIdeal")}
-                value={premium(progressVsIdealDisplay)}
-                tooltip="Compared against typical progress for the detected stage."
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                  <div className="space-y-6">
+                    <Accordion title="Execution Performance" icon={<Hammer size={20} />} defaultOpen={true} extra={<Pill className="font-bold border-none bg-[color:var(--accent)] text-[color:var(--accent-contrast)]">{stageLabel}</Pill>}>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <StatCard label={status === "Completed" ? t("timeTaken") : t("timeLeft")} value={timelineValue} />
+                        <StatCard label={manpowerLabel} value={manpowerValue} />
+                        <StatCard label={machineryLabel} value={machineryValue} />
+                      </div>
+                      
+                      <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div>
+                          <Label>{t("resources").toUpperCase()}</Label>
+                          <div className="mt-4 flex flex-wrap gap-2">
+                            {[
+                              { label: manpowerTag(stageLabel), color: 'bg-blue-500' },
+                              { label: skillsTag(stageLabel), color: 'bg-emerald-500' },
+                              { label: machineryTag(stageLabel), color: 'bg-orange-500' },
+                              { label: hardwareTag(stageLabel), color: 'bg-purple-500' }
+                            ].map((tag, idx) => (
+                              <Pill key={idx} className={`border-none ${tag.color}/10 ${tag.color.replace('bg-', 'text-')} font-black px-4 py-2`}>{tag.label}</Pill>
+                            ))}
+                          </div>
+                        </div>
+                        <div>
+                          <Label>{t("stagesLeft").toUpperCase()}</Label>
+                          <div className="mt-4 flex flex-wrap gap-2">
+                            {stagesLeft.length ? (
+                              stagesLeft.map((item, idx) => (
+                                <motion.span 
+                                  initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: idx * 0.1 }}
+                                  key={item} 
+                                  className="rounded-xl border-2 border-[color:var(--line)] bg-[color:var(--card)] px-4 py-2 text-[11px] font-black text-[color:var(--text)] shadow-sm hover:border-[color:var(--accent)]/20 transition-colors"
+                                >
+                                  {item}
+                                </motion.span>
+                              ))
+                            ) : (
+                              <span className="text-xs font-bold text-[color:var(--muted)]">Sequence Complete</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </Accordion>
+
+                    <Accordion title="Advanced Risk & Benchmarks" icon={<AlertTriangle size={20} />} extra={paywalled ? <Pill className="bg-red-500/10 text-red-500 border-none font-black text-[10px]">LOCKED</Pill> : null}>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <StatCard label={t("progressVsIdeal")} value={premium(progressVsIdealDisplay)} />
+                        <StatCard label={t("timelineDrift")} value={premium(driftDisplay)} />
+                      </div>
+
+                      <div className="mt-8 p-6 rounded-[2rem] bg-[color:var(--bg)] border border-[color:var(--line)]">
+                        <div className="flex items-center gap-2 mb-4">
+                          <Activity size={18} className="text-[color:var(--accent)]" />
+                          <Label>{t("insights").toUpperCase()}</Label>
+                        </div>
+                        <ul className="space-y-4">
+                          {insightsDisplay.map((item, i) => (
+                            <motion.li key={`insight-${i}`} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.1 }} className="flex items-start gap-4">
+                              <div className="h-6 w-6 rounded-lg bg-[color:var(--accent)] text-[color:var(--accent-contrast)] flex items-center justify-center shrink-0 shadow-sm">
+                                <CheckCircle2 size={14} />
+                              </div>
+                              <span className="text-sm font-bold leading-relaxed text-[color:var(--text)]">{item}</span>
+                            </motion.li>
+                          ))}
+                        </ul>
+                      </div>
+
+                      <div className="mt-8">
+                        <Button
+                          variant="primary"
+                          onClick={paywalled ? () => setAuthMode('accesscode') : runAdvanced}
+                          disabled={!baseValid || advLoading}
+                          className={`w-full h-14 rounded-2xl font-black shadow-lg ${!advLoading ? "shadow-black/10" : "opacity-40"}`}
+                        >
+                          {advLoading ? <Spinner /> : paywalled ? "UNLOCK PRO" : t("revealRisks").toUpperCase()}
+                        </Button>
+                      </div>
+                    </Accordion>
+                  </div>
+
+                  <div className="space-y-6">
+                    <Accordion title="Financial Valuation" icon={<BarChart size={20} />} defaultOpen={true}>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {status === "Completed" ? (
+                          <>
+                            <div className="col-span-1 sm:col-span-2">
+                              <StatCard label={t("propertyVal")} value={premium(formatCurrencyRange(currency, minVal, maxVal, rates))} tag={<Pill className="border-none bg-[color:var(--card-weak)] font-black">{CURRENCY_LABELS[currency].code}</Pill>} />
+                            </div>
+                            <StatCard label={t("budgetUsed")} value={premium(formatCurrencyRange(currency, minBudgetUsed, maxBudgetUsed, rates))} />
+                            <StatCard label={t("confidence")} value={premium(stageMeta.confidence)} />
+                          </>
+                        ) : (
+                          <>
+                            <StatCard label={t("budgetLeft")} value={premium(formatCurrencyRange(currency, minBudget, maxBudget, rates))} />
+                            <StatCard label={t("budgetUsed")} value={premium(formatCurrencyRange(currency, minBudgetUsed, maxBudgetUsed, rates))} />
+                            <StatCard label={t("landVal")} value={premium(formatCurrencyRange(currency, minLand, maxLand, rates))} />
+                            <StatCard label={t("projectVal")} value={premium(formatCurrencyRange(currency, minVal, maxVal, rates))} />
+                          </>
+                        )}
+                      </div>
+                      
+                      <div className="mt-8">
+                        <Label>{t("signals").toUpperCase()}</Label>
+                        <div className="mt-4 flex flex-wrap gap-2">
+                          {signals.length ? (
+                            signals.map((item, idx) => (
+                              <motion.span 
+                                initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 + idx * 0.1 }}
+                                key={item} 
+                                className="rounded-xl border border-[color:var(--line)] bg-[color:var(--bg)] px-4 py-2 text-[10px] font-black text-[color:var(--text)] shadow-sm"
+                              >
+                                {item.toUpperCase()}
+                              </motion.span>
+                            ))
+                          ) : (
+                            <span className="text-[11px] font-bold text-[color:var(--muted)]">Calculating signals...</span>
+                          )}
+                        </div>
+                      </div>
+                    </Accordion>
+                    
+                    <Accordion title="Data Distribution" icon={<Layers size={20} />}>
+                      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                        <PieCard title="Stage Time Split" segments={timeSplitSegments} valueFormatter={(value) => (baseValid ? `${value}h` : "-")} />
+                        <PieCard title="Budget Allocation" segments={budgetSplitSegments} valueFormatter={(value) => (baseValid ? formatCurrencyValue(currency, value, rates) : "-")} />
+                      </div>
+
+                      <div className="mt-8 overflow-hidden rounded-[2rem] border border-[color:var(--line)] bg-[color:var(--bg)] shadow-inner">
+                        {selectedCategoryRow ? (
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-px bg-[color:var(--line)]">
+                            {categoryEntries.map((entry, i) => (
+                              <div key={entry.label} className="bg-[color:var(--bg)] p-5 transition-colors hover:bg-[color:var(--card)]/50">
+                                <div className="text-[9px] font-black uppercase tracking-widest text-[color:var(--muted)] mb-1">{entry.label}</div>
+                                <div className="text-sm font-bold text-[color:var(--text)]">{entry.value}</div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="p-10 text-center">
+                            <Activity size={32} className="mx-auto text-[color:var(--line)] mb-4" />
+                            <div className="text-sm font-black text-[color:var(--muted)] uppercase tracking-widest">Matrix Pending Analysis</div>
+                          </div>
+                        )}
+                      </div>
+                    </Accordion>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Authentication Modal Overlay */}
+        <AnimatePresence>
+          {authMode && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setAuthMode(null)}
+                className="absolute inset-0 bg-[color:var(--bg)]/80 backdrop-blur-sm" 
               />
-              <StatCard label={t("timelineDrift")} value={premium(driftDisplay)} tooltip="Derived from stage pace vs benchmark." />
-            </div>
-
-            <div className="mt-4">
-              <div className="flex items-center gap-2">
-                <Label>{t("insights")}</Label>
-                <Info text="Insights are simplified for non-technical users, based on stage and location." />
-              </div>
-              <ul className="mt-2 list-none space-y-2 pl-0">
-                {insightsDisplay.map((item, i) => (
-                  <li key={`insight-${i}`} className="break-words text-[11px] font-semibold leading-snug text-[color:var(--text)]">
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div className="mt-4">
-              <Label>{t("riskReveal")}</Label>
-              <Button
-                onClick={runAdvanced}
-                disabled={!baseValid || advLoading || paywalled}
-                className={`mt-2 w-full ${baseValid && !paywalled ? "" : "opacity-60"}`}
+              <motion.div
+                layoutId="auth-modal"
+                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                className="relative w-full max-w-md overflow-hidden rounded-[2.5rem] border border-[color:var(--line)] bg-[color:var(--card)] p-8 shadow-2xl"
               >
-                {advLoading ? "Running" : t("revealRisks")}
-              </Button>
-            </div>
+                <button 
+                  onClick={() => setAuthMode(null)}
+                  className="absolute right-6 top-6 text-[color:var(--muted)] hover:text-[color:var(--text)] transition-colors"
+                >
+                  <X size={20} />
+                </button>
 
-            <details className="mt-4">
-              <summary className="cursor-pointer text-xs font-semibold uppercase tracking-[0.2em] text-[color:var(--muted)]">{t("assumptions")}</summary>
-              <ul className="mt-2 list-none space-y-1 pl-0 text-xs font-semibold text-[color:var(--muted)]">
-                <li>{t("photoEstimate")}</li>
-                <li>{t("indicative")}</li>
-                {(base?.notes ?? []).slice(0, 4).map((note, i) => (
-                  <li key={`note-${i}`}>{note}</li>
-                ))}
-              </ul>
-            </details>
-          </Card>
-        </div>
+                <div className="mb-8">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="p-2 rounded-lg bg-[color:var(--accent)]/10 text-[color:var(--accent)]">
+                      {authMode === 'signin' ? <Lock size={18} /> : authMode === 'register' ? <User size={18} /> : <Hash size={18} />}
+                    </div>
+                    <Label>{authMode === 'signin' ? "Welcome Back" : authMode === 'register' ? "Create Account" : "Access Code"}</Label>
+                  </div>
+                  <h3 className="text-3xl font-black text-[color:var(--text)] tracking-tight">
+                    {authMode === 'signin' ? "Sign In" : authMode === 'register' ? "Join Builtattic" : "Enter Code"}
+                  </h3>
+                </div>
+
+                <div className="space-y-4">
+                  {authMode === 'register' && (
+                    <div className="space-y-1.5">
+                      <Label>Full Name</Label>
+                      <div className="relative">
+                        <User className="absolute left-4 top-1/2 -translate-y-1/2 text-[color:var(--muted)]" size={16} />
+                        <input
+                          type="text"
+                          value={name}
+                          onChange={(e) => setName(e.target.value)}
+                          placeholder="John Doe"
+                          className="h-12 w-full rounded-2xl border border-[color:var(--line)] bg-[color:var(--bg)] pl-11 pr-4 text-xs font-bold text-[color:var(--text)] outline-none focus:border-[color:var(--accent)] transition-all"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {authMode !== 'accesscode' ? (
+                    <>
+                      <div className="space-y-1.5">
+                        <Label>Email Address</Label>
+                        <div className="relative">
+                          <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-[color:var(--muted)]" size={16} />
+                          <input
+                            type="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            placeholder="name@company.com"
+                            className="h-12 w-full rounded-2xl border border-[color:var(--line)] bg-[color:var(--bg)] pl-11 pr-4 text-xs font-bold text-[color:var(--text)] outline-none focus:border-[color:var(--accent)] transition-all"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <Label>Password</Label>
+                        <div className="relative">
+                          <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-[color:var(--muted)]" size={16} />
+                          <input
+                            type="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            placeholder="••••••••"
+                            className="h-12 w-full rounded-2xl border border-[color:var(--line)] bg-[color:var(--bg)] pl-11 pr-4 text-xs font-bold text-[color:var(--text)] outline-none focus:border-[color:var(--accent)] transition-all"
+                          />
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="space-y-1.5">
+                      <Label>Access Code</Label>
+                      <div className="relative">
+                        <Hash className="absolute left-4 top-1/2 -translate-y-1/2 text-[color:var(--muted)]" size={16} />
+                        <input
+                          type="text"
+                          value={accessCode}
+                          onChange={(e) => setAccessCode(e.target.value)}
+                          placeholder="Enter your pro code"
+                          className="h-12 w-full rounded-2xl border border-[color:var(--line)] bg-[color:var(--bg)] pl-11 pr-4 text-xs font-bold text-[color:var(--text)] outline-none focus:border-[color:var(--accent)] transition-all"
+                        />
+                      </div>
+                      <p className="text-[10px] font-bold text-[color:var(--muted)] px-1">Enter a valid code to instantly unlock Pro features.</p>
+                    </div>
+                  )}
+
+                  <Button
+                    onClick={authMode === 'signin' ? signIn : authMode === 'register' ? register : validateAccessCode}
+                    className="h-14 w-full rounded-[1.5rem] text-lg font-black shadow-xl shadow-black/10 mt-4"
+                  >
+                    {authMode === 'signin' ? "Sign In" : authMode === 'register' ? "Create Account" : "Unlock Pro"}
+                  </Button>
+
+                  <div className="pt-4 text-center">
+                    <p className="text-[11px] font-bold text-[color:var(--muted)]">
+                      {authMode === 'signin' ? (
+                        <>
+                          Don't have an account?{" "}
+                          <button onClick={() => setAuthMode('register')} className="text-[color:var(--accent)] hover:underline">Join Now</button>
+                        </>
+                      ) : authMode === 'register' ? (
+                        <>
+                          Already have an account?{" "}
+                          <button onClick={() => setAuthMode('signin')} className="text-[color:var(--accent)] hover:underline">Sign In</button>
+                        </>
+                      ) : (
+                        <button onClick={() => setAuthMode('signin')} className="text-[color:var(--accent)] hover:underline">Back to Sign In</button>
+                      )}
+                    </p>
+                    {authMode !== 'accesscode' && (
+                      <button onClick={() => setAuthMode('accesscode')} className="mt-2 text-[10px] font-black uppercase tracking-widest text-[color:var(--muted)] hover:text-[color:var(--text)] transition-colors">
+                        Have an access code?
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
       </main>
     </div>
   );

@@ -1,9 +1,5 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { mustGetEnv } from "./env";
-
-const apiKey = mustGetEnv("GEMINI_API_KEY");
-
-export const genAI = new GoogleGenerativeAI(apiKey);
+import { isLocalDevBypass } from "./dev";
 
 const DEFAULT_VISION_MODEL = process.env.GEMINI_MODEL ?? "gemini-2.5-flash";
 const FALLBACK_VISION_MODELS = [
@@ -19,13 +15,29 @@ const FALLBACK_VISION_MODELS = [
 
 const MODEL_LIST_TTL_MS = 6 * 60 * 60 * 1000;
 let cachedModelList: { at: number; models: string[] } | null = null;
+let genAI: GoogleGenerativeAI | null = null;
+
+function getApiKey() {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) throw new Error("Missing env var: GEMINI_API_KEY");
+  return apiKey;
+}
+
+function getGenAI() {
+  if (!genAI) {
+    genAI = new GoogleGenerativeAI(getApiKey());
+  }
+  return genAI;
+}
 
 async function listAvailableModels() {
+  if (isLocalDevBypass()) return [];
   const now = Date.now();
   if (cachedModelList && now - cachedModelList.at < MODEL_LIST_TTL_MS) {
     return cachedModelList.models;
   }
   try {
+    const apiKey = getApiKey();
     const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`, {
       method: "GET",
       cache: "no-store"
@@ -51,10 +63,13 @@ function uniqueModels(primary: string | undefined, fallbacks: string[]) {
 
 export function modelVision(modelName?: string) {
   const model = modelName ?? DEFAULT_VISION_MODEL;
-  return genAI.getGenerativeModel({ model });
+  return getGenAI().getGenerativeModel({ model });
 }
 
 export async function generateVisionContent(parts: Parameters<ReturnType<typeof modelVision>["generateContent"]>[0], overrideModel?: string) {
+  if (isLocalDevBypass()) {
+    throw new Error("Gemini is disabled while LOCAL_DEV_BYPASS is enabled.");
+  }
   const available = await listAvailableModels();
   const allowAny = available.length === 0;
   const preferred = FALLBACK_VISION_MODELS.filter((name) => allowAny || available.includes(name));

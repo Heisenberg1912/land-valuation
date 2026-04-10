@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { ensureUsageKey, getUsageState, incrementFreeUse, checkHasPro } from "@/lib/auth";
-import { generateVisionContent, toInlineData } from "@/lib/gemini";
 import { buildBasePrompt } from "@/lib/gemini-tuning";
 import { BaseResultSchema } from "@/lib/schema";
 import { CATEGORY_ROWS } from "@/lib/category-data";
+import { isLocalDevBypass } from "@/lib/dev";
+import { createMockBaseResult } from "@/lib/mock-analysis";
 
 const Body = z.object({
   imageDataUrl: z.string().min(20),
@@ -164,6 +165,13 @@ export async function POST(req: Request) {
   }
 
   const body = Body.parse(await req.json());
+
+  if (isLocalDevBypass()) {
+    const base = createMockBaseResult(body.meta);
+    return NextResponse.json({ base, usage: { freeUsed: 0, freeRemaining: Infinity, paid: true, hasPro: true, mock: true } });
+  }
+
+  const [{ generateVisionContent, toInlineData }] = await Promise.all([import("@/lib/gemini")]);
   const inline = toInlineData(body.imageDataUrl);
 
   let result;
