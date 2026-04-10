@@ -2459,7 +2459,7 @@ export default function Page() {
                     <p className="text-[11px] font-bold text-[color:var(--muted)]">
                       {authMode === 'signin' ? (
                         <>
-                          Don't have an account?{" "}
+                          Don&apos;t have an account?{" "}
                           <button onClick={() => setAuthMode('register')} className="text-[color:var(--accent)] hover:underline">Join Now</button>
                         </>
                       ) : authMode === 'register' ? (

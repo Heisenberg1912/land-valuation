@@ -10,3 +10,25 @@
 
  ✓ Starting...
  ✓ Ready in 1715ms
+ ○ Compiling /middleware ...
+ ✓ Compiled /middleware in 3s (588 modules)
+ GET / 200 in 3273ms
+ ○ Compiling /api/analyze ...
+ ✓ Compiled /api/analyze in 2.3s (288 modules)
+ ✓ Compiled (306 modules)
+ GET /api/usage 200 in 2701ms
+ POST /api/analyze 200 in 2716ms
+ ✓ Compiled /api/auth/register in 81ms (308 modules)
+ ✓ Compiled (310 modules)
+ POST /api/advanced 200 in 173ms
+ POST /api/auth/register 200 in 426ms
+ GET /api/usage 200 in 5ms
+ ✓ Compiled in 1262ms (672 modules)
+ ✓ Compiled in 805ms (681 modules)
+ ✓ Compiled in 315ms (681 modules)
+ ✓ Compiled in 879ms (682 modules)
+ ✓ Compiled in 116ms (682 modules)
+ ✓ Compiled in 140ms (682 modules)
+ ✓ Compiled in 939ms (682 modules)
+ ✓ Compiled in 948ms (682 modules)
+ ✓ Compiled in 9.8s (682 modules)
