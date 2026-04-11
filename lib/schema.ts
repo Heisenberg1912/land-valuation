@@ -18,6 +18,13 @@ export const BaseResultSchema = z.object({
     manpower_hours: z.number().nonnegative(),
     machinery_hours: z.number().nonnegative()
   }),
+  valuation: z.object({
+    property_value_min_usd: z.number().nonnegative(),
+    property_value_max_usd: z.number().nonnegative(),
+    budget_used_min_usd: z.number().nonnegative(),
+    budget_used_max_usd: z.number().nonnegative(),
+    confidence: z.enum(["Low", "Medium", "High"])
+  }).optional(),
   category_matrix: z.object({
     Category: z.string().min(1),
     Typology: z.string().min(1),

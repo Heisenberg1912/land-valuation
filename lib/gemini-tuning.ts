@@ -19,6 +19,13 @@ export const GEMINI_TUNING = {
     "manpower_hours": number,
     "machinery_hours": number
   },
+  "valuation": {
+    "property_value_min_usd": number,
+    "property_value_max_usd": number,
+    "budget_used_min_usd": number,
+    "budget_used_max_usd": number,
+    "confidence": "Low" | "Medium" | "High"
+  },
   "category_matrix": {
     "Category": string,
     "Typology": string,
@@ -48,7 +55,11 @@ export const GEMINI_TUNING = {
     "Use realistic, conservative ranges in hours. Avoid absurd precision.",
     "category_matrix fields must be populated with realistic, consumer-friendly terms derived from the image context. No blanks.",
     "Arrays must contain only the allowed stage values, max 5 items each, no duplicates, no repeated words.",
-    "Use conservative, plausible estimates. Avoid overconfidence. Put assumptions in notes."
+    "Use conservative, plausible estimates. Avoid overconfidence. Put assumptions in notes.",
+    "valuation: Use the image, location, scale, and project type to estimate real-world USD market value. Use local comparable rates — Mumbai/Delhi luxury towers are worth far more than tier-2 city mid-rises. Consider: land prices for the city, construction cost per sqft, scale multiplier, and completion status.",
+    "valuation.property_value_min_usd and property_value_max_usd: final market value of the completed property in USD. Must reflect actual location-aware market pricing. A luxury high-rise in Mumbai can exceed $50M; a Hyderabad mid-rise residential might be $500K–$5M.",
+    "valuation.budget_used_min_usd and budget_used_max_usd: money already spent proportional to progress_percent.",
+    "valuation.confidence: 'Low' if early stage or landmark property, 'Medium' if mid-stage or typical typology, 'High' if completed and identifiable."
   ],
   advancedSchema: `{
   "progress_vs_ideal": "Ahead" | "On Track" | "Delayed",
@@ -72,8 +83,11 @@ export function buildBasePrompt(meta: BaseMeta) {
   return `
 ${GEMINI_TUNING.persona}
 You analyze a site photo (or project photo) and produce strict, engineering-grade outputs.
-First decide if the project is "under_construction" or "completed".
-Then output ONLY valid JSON matching this exact schema:
+
+Step 1: Identify what you see — building type, location clues, scale, materials, completion state.
+Step 2: If you recognize a landmark or notable building, use your real-world knowledge of its actual value.
+Step 3: Decide if the project is "under_construction" or "completed".
+Step 4: Output ONLY valid JSON matching this exact schema:
 
 ${GEMINI_TUNING.baseSchema}
 
@@ -86,6 +100,7 @@ Rules:
   constructionType: ${meta.constructionType ?? "unknown"}
   note: ${meta.note ?? "none"}
   language: ${meta.language ?? "English"}
+- For valuation: research actual comparable property values for this location and building type. Do not use generic US suburban pricing. A luxury tower in Mumbai, a tech campus in Hyderabad, or a heritage building in London all have very different market rates.
 Return JSON only. No markdown. No commentary.
 `.trim();
 }

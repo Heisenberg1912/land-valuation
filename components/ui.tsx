@@ -84,9 +84,20 @@ export function Accordion({ title, icon, defaultOpen = false, children, extra }:
 
 export function Spinner() {
   return (
-    <div className="inline-flex items-center gap-3 text-sm font-black uppercase tracking-widest text-[color:var(--muted)]">
-      <span className="h-5 w-5 animate-spin rounded-full border-4 border-[color:var(--line)] border-t-[color:var(--accent)]" />
-      <span>Analyzing…</span>
+    <div className="inline-flex items-center gap-3">
+      <div className="relative h-5 w-5 flex items-center justify-center">
+        <motion.span
+          className="absolute h-5 w-5 rounded-full border-2 border-transparent border-t-white"
+          animate={{ rotate: 360 }}
+          transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}
+        />
+        <motion.span
+          className="absolute h-3 w-3 rounded-full border-2 border-transparent border-b-white/60"
+          animate={{ rotate: -360 }}
+          transition={{ duration: 1.2, repeat: Infinity, ease: "linear" }}
+        />
+      </div>
+      <span className="text-sm font-black uppercase tracking-widest">Analyzing…</span>
     </div>
   );
 }

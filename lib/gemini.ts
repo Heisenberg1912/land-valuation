@@ -1,9 +1,10 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { isLocalDevBypass } from "./dev";
 
-const DEFAULT_VISION_MODEL = process.env.GEMINI_MODEL ?? "gemini-2.5-flash";
+const DEFAULT_VISION_MODEL = process.env.GEMINI_MODEL ?? "gemini-3-pro-preview";
 const FALLBACK_VISION_MODELS = [
-  "gemini-2.5-flash",
+  "gemini-3-pro-preview",
+  "gemini-3-flash-preview",
   "gemini-2.5-flash-lite",
   "gemini-2.0-flash",
   "gemini-2.0-flash-lite",
@@ -63,7 +64,15 @@ function uniqueModels(primary: string | undefined, fallbacks: string[]) {
 
 export function modelVision(modelName?: string) {
   const model = modelName ?? DEFAULT_VISION_MODEL;
-  return getGenAI().getGenerativeModel({ model });
+  return getGenAI().getGenerativeModel({
+    model,
+    generationConfig: {
+      temperature: 0.1,
+      topP: 0.95,
+      maxOutputTokens: 8192,
+      responseMimeType: "application/json"
+    }
+  });
 }
 
 export async function generateVisionContent(parts: Parameters<ReturnType<typeof modelVision>["generateContent"]>[0], overrideModel?: string) {

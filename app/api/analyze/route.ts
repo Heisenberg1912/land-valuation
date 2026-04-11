@@ -116,6 +116,21 @@ function sanitizeBase(input: any, metaProjectType?: string) {
   };
   const datasetRow = findRow();
 
+  const val = input.valuation;
+  const valuation =
+    val &&
+    Number.isFinite(val.property_value_min_usd) &&
+    Number.isFinite(val.property_value_max_usd) &&
+    val.property_value_max_usd > 0
+      ? {
+          property_value_min_usd: Math.max(0, Number(val.property_value_min_usd)),
+          property_value_max_usd: Math.max(0, Number(val.property_value_max_usd)),
+          budget_used_min_usd: Math.max(0, Number(val.budget_used_min_usd) || 0),
+          budget_used_max_usd: Math.max(0, Number(val.budget_used_max_usd) || 0),
+          confidence: ["Low", "Medium", "High"].includes(val.confidence) ? val.confidence : "Medium"
+        }
+      : undefined;
+
   return {
     project_status: status,
     stage_of_construction: stage,
@@ -125,6 +140,7 @@ function sanitizeBase(input: any, metaProjectType?: string) {
       manpower_hours: manpowerHours,
       machinery_hours: machineryHours
     },
+    valuation,
     category_matrix: {
       Category: cleanField(matrix.Category, datasetRow.Category),
       Typology: cleanField(matrix.Typology, datasetRow.Typology),

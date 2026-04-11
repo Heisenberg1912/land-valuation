@@ -1214,7 +1214,7 @@ function StatCard({ label, value, tooltip, tag }: { label: string; value: React.
         {label}
         {tooltip ? <Info text={tooltip} /> : null}
       </div>
-      <div className="mt-2 break-words text-[clamp(15px,2vw,26px)] font-black leading-tight text-[color:var(--text)]">{value}</div>
+      <div className="mt-2 break-words text-[clamp(12px,1.4vw,18px)] font-black leading-tight text-[color:var(--text)]">{value}</div>
       {tag ? <div className="mt-2">{tag}</div> : null}
     </div>
   );
@@ -1690,31 +1690,26 @@ export default function Page() {
   const progressVsIdealDisplay = !baseValid ? t("awaitingBase") : advanced?.progress_vs_ideal ?? t("revealRisks");
 
   const progressFactor = progressValue / 100;
+  const geminiVal = base?.valuation;
+  const valConfidence: "Low" | "Medium" | "High" = geminiVal?.confidence ?? (stageLabel === "Completed" || stageLabel === "Finishing" ? "High" : stageLabel === "Structure" || stageLabel === "Services" ? "Medium" : "Low");
+
+  // Use Gemini's location-aware valuation when available, fall back to formula
   const scaleFactor =
     meta.scale === "High-rise" ? 1.3 : meta.scale === "Mid-rise" ? 1.15 : meta.scale === "Large-site" ? 1.4 : 1;
   const typeFactor =
     meta.projectType === "Commercial" ? 1.15 : meta.projectType === "Industrial" ? 1.25 : meta.projectType === "Mixed-use" ? 1.2 : 1;
-  const baseValue = (280000 + progressFactor * 220000) * scaleFactor * typeFactor;
-  const stageConfidenceMap: Record<StageLabel, { spread: number; confidence: "Low" | "Medium" | "High" }> = {
-    Planning: { spread: 0.45, confidence: "Low" },
-    Foundation: { spread: 0.35, confidence: "Low" },
-    Structure: { spread: 0.25, confidence: "Medium" },
-    Services: { spread: 0.2, confidence: "Medium" },
-    Finishing: { spread: 0.12, confidence: "High" },
-    Completed: { spread: 0.06, confidence: "High" }
-  };
-  const stageMeta = stageConfidenceMap[stageLabel];
-  const minVal = roundTo(baseValue * (1 - stageMeta.spread), 5000);
-  const maxVal = roundTo(baseValue * (1 + stageMeta.spread), 5000);
-  const budgetBase = baseValue * Math.max(0, 1 - progressFactor);
-  const minBudget = roundTo(budgetBase * (1 - stageMeta.spread), 5000);
-  const maxBudget = roundTo(budgetBase * (1 + stageMeta.spread), 5000);
-  const budgetUsedBase = baseValue * progressFactor;
-  const minBudgetUsed = roundTo(budgetUsedBase * (1 - stageMeta.spread), 5000);
-  const maxBudgetUsed = roundTo(budgetUsedBase * (1 + stageMeta.spread), 5000);
+  const fallbackBase = (280000 + progressFactor * 220000) * scaleFactor * typeFactor;
+
+  const minVal = geminiVal ? geminiVal.property_value_min_usd : roundTo(fallbackBase * 0.94, 5000);
+  const maxVal = geminiVal ? geminiVal.property_value_max_usd : roundTo(fallbackBase * 1.06, 5000);
+  const minBudgetUsed = geminiVal ? geminiVal.budget_used_min_usd : roundTo(fallbackBase * progressFactor * 0.94, 5000);
+  const maxBudgetUsed = geminiVal ? geminiVal.budget_used_max_usd : roundTo(fallbackBase * progressFactor * 1.06, 5000);
+  const remainingBase = fallbackBase * Math.max(0, 1 - progressFactor);
+  const minBudget = roundTo(remainingBase * 0.94, 5000);
+  const maxBudget = roundTo(remainingBase * 1.06, 5000);
   const landBase = (120000 + progressFactor * 80000) * scaleFactor;
-  const minLand = roundTo(landBase * (1 - stageMeta.spread), 5000);
-  const maxLand = roundTo(landBase * (1 + stageMeta.spread), 5000);
+  const minLand = roundTo(landBase * 0.94, 5000);
+  const maxLand = roundTo(landBase * 1.06, 5000);
 
   const errorShort = error ? compactWords(error, 2) : null;
 
@@ -1921,7 +1916,7 @@ export default function Page() {
       { label: "Overhead", value: 0.18, color: "#94a3b8" }
     ]
   };
-  const budgetSplitBase = baseValid ? baseValue : 0;
+  const budgetSplitBase = baseValid ? (geminiVal ? (minVal + maxVal) / 2 : fallbackBase) : 0;
   const budgetSplitSegments = budgetMix[stageLabel].map((item) => ({
     ...item,
     value: baseValid ? Math.max(1, Math.round(budgetSplitBase * item.value)) : 1,
@@ -2021,11 +2016,13 @@ export default function Page() {
         {/* Left Side: Capture & Input */}
         <motion.div
           layout
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ 
-            layout: { type: "spring", damping: 35, stiffness: 100 },
-            opacity: { duration: 0.6 } 
+          initial={{ opacity: 0, x: 0 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: -60 }}
+          transition={{
+            layout: { type: "spring", damping: 30, stiffness: 90 },
+            opacity: { duration: 0.5 },
+            x: { duration: 0.4, ease: [0.4, 0, 0.2, 1] }
           }}
           style={baseValid ? {
             paddingTop: '51px',
@@ -2284,7 +2281,7 @@ export default function Page() {
                               <StatCard label={t("propertyVal")} value={premium(formatCurrencyRange(currency, minVal, maxVal, rates))} tag={<Pill className="border-none bg-[color:var(--card-weak)] font-black">{CURRENCY_LABELS[currency].code}</Pill>} />
                             </div>
                             <StatCard label={t("budgetUsed")} value={premium(formatCurrencyRange(currency, minBudgetUsed, maxBudgetUsed, rates))} />
-                            <StatCard label={t("confidence")} value={premium(stageMeta.confidence)} />
+                            <StatCard label={t("confidence")} value={premium(valConfidence)} />
                           </>
                         ) : (
                           <>
