@@ -30,6 +30,13 @@ type BaseResult = {
   };
   scope: { stages_completed: string[]; stages_left: string[]; dependencies: string[] };
   notes: string[];
+  valuation?: {
+    property_value_min_usd: number;
+    property_value_max_usd: number;
+    budget_used_min_usd: number;
+    budget_used_max_usd: number;
+    confidence: "Low" | "Medium" | "High";
+  };
 };
 
 type AdvancedResult = {
